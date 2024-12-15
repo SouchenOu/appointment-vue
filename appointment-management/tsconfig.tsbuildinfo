@@ -1,0 +1,1 @@
+{"root":["./src/app.vue","./src/main.ts","./src/shims-vue.d.ts","./src/vite-env.d.ts","./src/components/addappointment.vue","./src/components/appointmentlist.vue","./src/components/editappointement.vue","./src/router/index.ts","./src/store/index.ts"],"version":"5.6.3"}
