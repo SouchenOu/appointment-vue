@@ -2,6 +2,8 @@ import { createStore } from 'vuex';
 import moment from 'moment';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
+import { AxiosError } from 'axios';
+
 
 
 
@@ -42,7 +44,7 @@ export default createStore<State>({
             const toast = useToast(); 
             try {
               const response = await axios.get("http://localhost:8000/appointments");
-              console.log("response-->", response);
+              
               if (response.status === 200) {
                 const appointments = response.data.appointments;
                 commit('SET_APPOINTMENTS', appointments);
@@ -56,47 +58,63 @@ export default createStore<State>({
               }
             }
           },
-        async createAppointment({ commit }, appointment: Appointment) {
-            const toast = useToast(); // Initialize toast
-            console.log("app-->", appointment);
+          async createAppointment({ commit }, appointment: Appointment) {
+            const toast = useToast();
             try {
-            
-              const response = await axios.post("http://localhost:8000/appointments", appointment)
-          
-              console.log("response-->", response);
-          
-              if (response.status === 200) {
-                const newAppointment = response.data.appointment;
-                commit('ADD_APPOINTMENT', newAppointment);
-                toast.success('Appointment created successfully!');
-            } 
-            } catch (error) {
-                console.log("error-->", error);
-                console.error("Error creating appointment:", error);
-            
-                if (error instanceof Error) {
-                  toast.error(`Error: ${error.message || 'An unknown error occurred'}`);
-                } else {
-                  toast.error('An unknown error occurred');
+                const result = await axios.post("http://localhost:8000/appointments", appointment);
+        
+                if (result.status === 200) {
+                    const newAppointment = result.data.appointment;
+                    commit('ADD_APPOINTMENT', newAppointment);
+                    toast.success('Appointment created successfully!');
                 }
-              }
-          },
-        async editAppointment({ commit }, updatedAppointment: Appointment) {
-            const response = await fetch(`http://localhost:8000/appointments/${updatedAppointment.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedAppointment)
-            });
-            if (response.ok) {
-                commit('EDIT_APPOINTMENT', updatedAppointment);
+            } catch (error) {
+                console.error("Error creating appointment:", error);
+        
+                if (error instanceof AxiosError) {
+                    toast.error(error.response?.data.error || 'An unknown error occurred');
+                } else {
+                    toast.error('An unknown error occurred');
+                }
             }
         },
-        async deleteAppointment({ commit }, id: string) {
-            const response = await fetch(`http://localhost:8000/appointments/${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
+        async editAppointment({ commit }, updatedAppointment) {
+            const toast = useToast();
+            try {
+              const response = await axios.put(`http://localhost:8000/appointments/${updatedAppointment.id}`, updatedAppointment);
+              
+              if (response.status === 200) {
+                commit('EDIT_APPOINTMENT', updatedAppointment);
+                toast.success('Appointment updated successfully!');
+              }
+            } catch (error) {
+              console.error("Error editing appointment:", error);
+        
+              if (error instanceof AxiosError) {
+                toast.error(error.response?.data.error || 'An unknown error occurred');
+              } else {
+                toast.error('An unknown error occurred');
+              }
+            }
+          },
+      
+        async deleteAppointment ({ commit, dispatch }, id: string){
+            const toast = useToast();
+
+            try {
+              const response = await axios.delete(`http://localhost:8000/appointments/${id}`);
+              if (response.status === 200) {
                 commit('DELETE_APPOINTMENT', id);
+                toast.success('Appointment delete successfully!');
+                dispatch('fetchAppointments');
+            }
+            } catch (error) {
+              console.error('Error deleting appointment:', error);
+              if (error instanceof AxiosError) {
+                toast.error(error.response?.data.error || 'An unknown error occurred');
+              } else {
+                toast.error('An unknown error occurred');
+              }
             }
         }
     },

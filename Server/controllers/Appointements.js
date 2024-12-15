@@ -2,7 +2,6 @@ import Appointment from "../models/Appointment.js";
 import moment from 'moment';
 
 export const getAllApointements= async(req, res) =>{
-  console.log("enter here");
     try {
         const appointments = await Appointment.find()
           .sort({ date: 1, time: 1 })
@@ -18,33 +17,30 @@ export const getAllApointements= async(req, res) =>{
 }
 
 export const createApointements = async(req, res) =>{
-  console.log("create");
     const { title, date, time } = req.body;
-    console.log("title-->", title);
-    console.log("date", date);
-    console.log("time-->", time);
+  
     
     try{
       if(!title || !date || !time){
         return res.status(401).json({ status: 'failure', error: 'all the element is required' });
   
       }
-  
-      const appointmentDateTime = moment(`${date} ${time}`, 'YYYY-MM-DD h:mm A');
+      const formattedDate = moment(date).format('YYYY-MM-DD');
+
+      const appointmentDateTime = moment(`${formattedDate} ${time}`, 'YYYY-MM-DD h:mm A');
+
     
       const now = moment();
     
   
-      if (!appointmentDateTime.isBetween(moment(`${date} 08:00 AM`, 'YYYY-MM-DD h:mm A'), moment(`${date} 06:00 PM`, 'YYYY-MM-DD h:mm A'))) {
-        return res.status(401).json({ message: 'Appointments must be scheduled between 8 AM and 6 PM.' });
+      if (!appointmentDateTime.isBetween(moment(`${formattedDate} 08:00 AM`, 'YYYY-MM-DD h:mm A'), moment(`${formattedDate} 06:00 PM`, 'YYYY-MM-DD h:mm A'))) {
+        return res.status(401).json({ error: 'Appointments must be scheduled between 8 AM and 6 PM.' });
   
       }
-    
-      const lunchStart = moment(`${date} 12:00 PM`, 'YYYY-MM-DD h:mm A');
-      const lunchEnd = moment(`${date} 02:00 PM`, 'YYYY-MM-DD h:mm A');
-      if (appointmentDateTime.isBetween(lunchStart, lunchEnd)) {
-        return res.status(401).json({ error: 'Appointments cannot be scheduled between 12 PM and 2 PM due to lunch break.' });
-  
+      const lunchStart = moment(`${formattedDate} 12:00 PM`, 'YYYY-MM-DD h:mm A');
+      const lunchEnd = moment(`${formattedDate} 02:00 PM`, 'YYYY-MM-DD h:mm A');
+      if (appointmentDateTime.isSameOrAfter(lunchStart) && appointmentDateTime.isSameOrBefore(lunchEnd)) {
+        return res.status(401).json({ error: 'Time falls within lunch break (12 PM - 2 PM).' });
       }
     
       if (appointmentDateTime.minute() !== 0) {
@@ -58,14 +54,13 @@ export const createApointements = async(req, res) =>{
       }
     
       const existingAppointment = await Appointment.findOne({
-        date: date,
+        date: formattedDate,
         time: time,
       });
       if (existingAppointment) {
         return res.status(401).json({ error: 'There is already an appointment scheduled for this time.' });
   
       }
-    console.log("yes here");
       const newAppointment = new Appointment({
         title,
         date,
@@ -82,7 +77,6 @@ export const createApointements = async(req, res) =>{
       .status(500)
       .json({ error: 'Server error. Please try again later.' });
     }
-    
 
   
   };
@@ -91,9 +85,6 @@ export const createApointements = async(req, res) =>{
     const { id } = req.params; 
     const { title, date, time } = req.body;
   
-    console.log("title-->", title);
-    console.log("date-->", date);
-    console.log("time-->", time);
   
     try {
       if (!title || !date || !time) {
@@ -104,7 +95,7 @@ export const createApointements = async(req, res) =>{
       const now = moment();
   
       if (!appointmentDateTime.isBetween(moment(`${date} 08:00 AM`, 'YYYY-MM-DD h:mm A'), moment(`${date} 06:00 PM`, 'YYYY-MM-DD h:mm A'))) {
-        return res.status(401).json({ message: 'Appointments must be scheduled between 8 AM and 6 PM.' });
+        return res.status(401).json({ error: 'Appointments must be scheduled between 8 AM and 6 PM.' });
       }
   
       const lunchStart = moment(`${date} 12:00 PM`, 'YYYY-MM-DD h:mm A');
@@ -154,6 +145,20 @@ export const createApointements = async(req, res) =>{
     }
   };
 
-export const deleteApointements = async()=>{
+export const deleteApointements = async(req, res)=>{
+  const { id } = req.params;
+
+  try {
+    const appointment = await Appointment.findByIdAndDelete(id);
+    
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    
+    res.status(200).json({ message: 'Appointment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 
 }
