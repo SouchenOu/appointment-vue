@@ -62,7 +62,6 @@ export default createStore<State>({
             const toast = useToast();
             try {
                 const result = await axios.post("http://localhost:8000/appointments", appointment);
-        
                 if (result.status === 200) {
                     const newAppointment = result.data.appointment;
                     commit('ADD_APPOINTMENT', newAppointment);
@@ -70,7 +69,6 @@ export default createStore<State>({
                 }
             } catch (error) {
                 console.error("Error creating appointment:", error);
-        
                 if (error instanceof AxiosError) {
                     toast.error(error.response?.data.error || 'An unknown error occurred');
                 } else {
