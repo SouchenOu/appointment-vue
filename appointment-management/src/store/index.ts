@@ -43,7 +43,7 @@ export default createStore<State>({
         async fetchAppointments({ commit }) {
             const toast = useToast(); 
             try {
-              const response = await axios.get("http://localhost:8000/appointments");
+              const response = await axios.get("https://appointment-vue.onrender.com/appointments");
               
               if (response.status === 200) {
                 const appointments = response.data.appointments;
@@ -61,7 +61,7 @@ export default createStore<State>({
           async createAppointment({ commit }, appointment: Appointment) {
             const toast = useToast();
             try {
-                const result = await axios.post("http://localhost:8000/appointments", appointment);
+                const result = await axios.post("https://appointment-vue.onrender.com/appointments", appointment);
                 if (result.status === 200) {
                     const newAppointment = result.data.appointment;
                     commit('ADD_APPOINTMENT', newAppointment);
@@ -79,7 +79,7 @@ export default createStore<State>({
         async editAppointment({ commit }, updatedAppointment) {
             const toast = useToast();
             try {
-              const response = await axios.put(`http://localhost:8000/appointments/${updatedAppointment.id}`, updatedAppointment);
+              const response = await axios.put(`https://appointment-vue.onrender.com/appointments/${updatedAppointment.id}`, updatedAppointment);
               
               if (response.status === 200) {
                 commit('EDIT_APPOINTMENT', updatedAppointment);
@@ -100,7 +100,7 @@ export default createStore<State>({
             const toast = useToast();
 
             try {
-              const response = await axios.delete(`http://localhost:8000/appointments/${id}`);
+              const response = await axios.delete(`https://appointment-vue.onrender.com/appointments/${id}`);
               if (response.status === 200) {
                 commit('DELETE_APPOINTMENT', id);
                 toast.success('Appointment delete successfully!');
